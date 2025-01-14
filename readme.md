@@ -1,8 +1,8 @@
 ### Este módulo consome dados da API-TINY de Produtos da Portoreal.
 
   ## Para utilizar corretamente:
-  1. Clique em "Funcionalidades" para ler sobre o que se trata o módulo ;
-  2. Clique em "Atualizar Dados" para os dados de produtos serem atualizados na Planilha.
+  1. Clique em "Sobre" para ler sobre o que se trata o módulo ;
+  2. Clique em "Atualizar" para os dados de produtos serem atualizados na Planilha.
 
   ## Um pouco mais sobre:
   - Essa aplicação possui scripts que lidam com consumo da API do ERP TINY ;
