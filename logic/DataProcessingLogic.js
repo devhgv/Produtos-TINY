@@ -1,11 +1,13 @@
 const DataProcessingLogic = (function () {
   function getDataTINY() {
     try {
-      Logger.log('Iniciando processamento da API com paginação...');
+      Logger.log("Iniciando processamento da API com paginação...");
       const urlAPI = "https://api.tiny.com.br/api2/produtos.pesquisa.php?";
       const tokenAPI = "token=0135deb228270acba2e5a8a3b5dddc8ebcf094f7";
       const pageAPI = "pagina=";
       let numPage = 1; // Página inicial.
+
+      clearSheet(); // Limpa a planilha antes de adicionar novos dados.
 
       while (true) {
         const urlTiny = `${urlAPI}${tokenAPI}&${pageAPI}${numPage}`;
@@ -25,12 +27,14 @@ const DataProcessingLogic = (function () {
 
         const produtos = root.getChild("produtos").getChildren("produto");
         if (!produtos.length) {
-          Logger.log(`Nenhum produto encontrado na página ${numPage}. Encerrando iteração.`);
+          Logger.log(
+            `Nenhum produto encontrado na página ${numPage}. Encerrando iteração.`
+          );
           break;
         }
 
         Logger.log(`Processando ${produtos.length} produtos da página ${numPage}...`);
-        const filteredData = produtos.map(product => ({
+        const filteredData = produtos.map((product) => ({
           ID: product.getChildText("id"),
           Codigo: product.getChildText("codigo"),
           Nome: product.getChildText("nome"),
@@ -43,44 +47,51 @@ const DataProcessingLogic = (function () {
         const checkedDataSheets = getDataChecked(cleanedDataSheets);
         setDataSheets(checkedDataSheets);
 
-        addLastUpdateColumn();
-
         Logger.log(`Página ${numPage} processada com sucesso.`);
         numPage++;
       }
 
-      Logger.log('Processamento concluído.');
+      
+      Logger.log("Processamento concluído.");
     } catch (error) {
       Logger.log(`Erro ao processar dados da API Tiny: ${error.message}`);
     }
   }
 
+  function clearSheet() {
+    Logger.log("Limpando a planilha...");
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Produtos");
+    sheet.clear(); // Remove todo o conteúdo e formatação da planilha.
+  }
+
   function getDataCleaned(products) {
-    Logger.log("Verificando valores vazios...");
+    Logger.log("Analisando valores vazios(...)");
     return products;
   }
 
   function getDataChecked(products) {
-    Logger.log("Verificando variações nulas...");
-    return products.filter(prod => prod.Nome);
+    Logger.log("Analisando variações nulas(...)");
+    return products.filter((prod) => prod.Nome);
   }
 
   function setupHeaders() {
-    const headers = ["ID", "Codigo", "Nome", "Categoria", "Ean", "NumeroSerie"];
+    const headers = ["ID", "Codigo", "Nome", "Categoria", "Ean", "NumeroSerie", "ultimaAtualizacao"];
     const sheetProdutos = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Produtos");
-    const lastRow = sheetProdutos.getLastRow() + 1;
-    const range = sheetProdutos.getRange(lastRow, 1, 1, headers.length);
+    const range = sheetProdutos.getRange(1, 1, 1, headers.length);
     range.setValues([headers]);
   }
 
+  const dateUpdate = new Date();
+
   function setupValues(productsJson) {
-    const valuesMatrix = productsJson.map(product => [
+    const valuesMatrix = productsJson.map((product) => [
       product.ID,
       product.Codigo,
       product.Nome,
       product.Categoria,
       product.Ean,
       product.NumeroSerie,
+      dateUpdate,
     ]);
 
     const sheetProdutos = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Produtos");
@@ -92,29 +103,8 @@ const DataProcessingLogic = (function () {
   function setDataSheets(dataSheets) {
     setupHeaders();
     setupValues(dataSheets);
-  }
 
-  function addLastUpdateColumn() {
-      const sheet =
-        SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Produtos");
-      const lastColumn = sheet.getLastColumn() + 1;
-  
-      sheet.getRange(1, lastColumn).setValue("Última Atualização");
-  
-      // Formata a data e hora atual.
-      const formattedDatetime = Utilities.formatDate(
-        new Date(),
-        Session.getScriptTimeZone(),
-        "dd/MM/yyyy HH:mm:ss"
-      );
-  
-      const numRows = sheet.getLastRow() - 1;
-      const dateValues = new Array(numRows).fill([formattedDatetime]);
-  
-      const range = sheet.getRange(2, lastColumn, numRows, 1);
-      range.setValues(dateValues);
-    }
-  
+  }
 
   return {
     getDataTINY,
